@@ -52,6 +52,12 @@ object Autotuner {
 //
 //  }
 
+  // Concise function to compute all factors of a number. Will be required to generate 
+  // inputs for block sizes given the size of a matrix dimension
+  def factors(n: Int) = {
+    (1 to Math.sqrt(n).toInt) filter (n % _ == 0) flatMap { x => List(x,n/x) } sorted
+  }
+
   def matrixMult_gold(args: Matrix*): Matrix = {
     val A: Matrix = args(0)  // M x P
     val B: Matrix = args(1)  // P x N

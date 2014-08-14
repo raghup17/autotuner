@@ -122,7 +122,7 @@ object MatMult {
       exit(-1)
     }
 
-    if (args.length != 1) {
+    if (args.length < 1) {
       usage
     }
 

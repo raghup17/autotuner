@@ -2,6 +2,7 @@
 
 if [ $# -ne 3 ]; then 
   echo "Usage: $0 <executable> <matrixSize> <blockSize>"
+  exit -1
 fi
 
 for i in `seq 1 10`; do 

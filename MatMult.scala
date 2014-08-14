@@ -35,7 +35,7 @@ class Matrix(dimx: Int, dimy: Int, initFunction: Int => Int) {
   }
 }
 
-object Autotuner {
+object MatMult {
 
 //  def autotune(f: (Any*, Any*) => Any, f_gold: Any* => Any)(input: Any*)(tunable: Any*): Array[Any] = {
 //    var speedup = 0.0
@@ -118,50 +118,25 @@ object Autotuner {
 
   def main(args: Array[String]) = {
     def usage() = {
-      println("Autotuner <squareMatrixSize> <blockSize>")
+      println("Autotuner <squareMatrixSize>")
       exit(-1)
     }
 
-    if (args.length != 2) {
+    if (args.length != 1) {
       usage
     }
 
     val matrixSize = args(0).toInt
-    val blockSize = args(1).toInt
     println("Initializing matrices (%d x %d)".format(matrixSize, matrixSize))
     val A = new Matrix(matrixSize,matrixSize, x => scala.util.Random.nextInt)
     val B = new Matrix(matrixSize,matrixSize, x => scala.util.Random.nextInt)
     println("Matrix initialization complete")
 
-    val m = blockSize
-    val n = blockSize
-    val p = blockSize
-    println("Beginning matrix multiply, block sizes %d, %d, %d".format(m,n,p))
+   println("Beginning matrix multiply")
     val t1 = System.nanoTime
-    val C = matrixMult(A,B)(m,n,p)
+    val C = matrixMult_gold(A,B)
     val t2 = System.nanoTime
     val matMultTime = t2 - t1
     println("Matrix multiply complete, time = %d".format((matMultTime))) 
- /* 
-    println("Verifying results:")
-    val t3 = System.nanoTime
-    val C_gold = matrixMult_gold(A,B)
-    val t4 = System.nanoTime
-    val verifyTime = t4 - t3
-    println("Verification complete, time = %d".format((verifyTime))) 
-    if (C equals C_gold) {
-      println("Matrix multiply PASSED")
-    }
-    else {
-      println("Matrix multiply FAILED")
-      println("Expected: ")
-      println(C_gold)
-      println("Got:")
-      println(C)
-    }
-
-    println("Blocked matrix multiply is faster by %f".format(verifyTime.toDouble/matMultTime))
-*/
-
   }
 }

@@ -124,30 +124,45 @@ object Autotuner {
 
   def main(args: Array[String]) = {
     def usage() = {
-      println("Autotuner <squareMatrixSize> <blockSize>")
+      println("Autotuner for block matrix multiplication of C(MxN) = A(MxP) * B(PxN)")
+      println("Usage: Autotuner M P N")
       exit(-1)
     }
 
-    if (args.length != 2) {
+    if (args.length != 3) {
       usage
     }
 
-    val matrixSize = args(0).toInt
-    val blockSize = args(1).toInt
-    println("Initializing matrices (%d x %d)".format(matrixSize, matrixSize))
-    val A = new Matrix(matrixSize,matrixSize, x => scala.util.Random.nextInt)
-    val B = new Matrix(matrixSize,matrixSize, x => scala.util.Random.nextInt)
+    val M = args(0).toInt
+    val P = args(1).toInt
+    val N = args(2).toInt
+
+    println("Initializing matrix A (%d x %d)".format(M, P))
+    val A = new Matrix(M,P, x => scala.util.Random.nextInt)
+    println("Initializing matrix B (%d x %d)".format(P, N))
+    val B = new Matrix(P,N, x => scala.util.Random.nextInt)
     println("Matrix initialization complete")
 
-    val m = blockSize
-    val n = blockSize
-    val p = blockSize
-    println("Beginning matrix multiply, block sizes %d, %d, %d".format(m,n,p))
-    val t1 = System.nanoTime
-    val C = matrixMult(A,B)(m,n,p)
-    val t2 = System.nanoTime
-    val matMultTime = t2 - t1
-    println("Matrix multiply complete, time = %d".format((matMultTime))) 
+    var perfMap = Map[Long, (Int,Int,Int)]()
+    for (m <- factors(M); n <- factors(N); p <- factors(P)) {
+      var multTimes = List[Long]()
+
+      // Run matrix multiply 6 (arbitrarily chosen) times, take the median
+      for (i <- 0 to 5) {
+        println("(%d) Beginning matrix multiply, block sizes %d, %d, %d".format(i,m,n,p))
+        val t1 = System.nanoTime
+        val C = matrixMult(A,B)(m,p,n)
+        val t2 = System.nanoTime
+        val matMultTime = t2 - t1
+        multTimes ::= matMultTime
+      }
+
+      val matMultMedian = multTimes.sorted.apply(multTimes.length/2)
+      perfMap += (matMultMedian -> (m,p,n))
+    }
+
+    println("Best block sizes:")
+    println(perfMap min)
  /* 
     println("Verifying results:")
     val t3 = System.nanoTime

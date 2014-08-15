@@ -1,3 +1,5 @@
+import tunable._
+
 class Matrix(dimx: Int, dimy: Int, initFunction: Int => Int) {
   val data: Array[Int] = new Array[Int](dimx*dimy) map (initFunction)
   def apply(i: Int, j: Int) = data(i*dimy+j)
@@ -37,20 +39,6 @@ class Matrix(dimx: Int, dimy: Int, initFunction: Int => Int) {
 
 object Autotuner {
 
-//  def autotune(f: (Any*, Any*) => Any, f_gold: Any* => Any)(input: Any*)(tunable: Any*): Array[Any] = {
-//    var speedup = 0.0
-//
-//    
-//    val t1 = System.nanoTime
-//    f(input)(tunable)
-//    val t2 = System.nanoTime
-//    val score = t2 - t1    
-//
-//    val t3 = System.nanoTime
-//    f_gold(input)
-//    val t4 = System.nanoTime
-//
-//  }
 
   // Concise function to compute all factors of a number. Will be required to generate 
   // inputs for block sizes given the size of a matrix dimension
@@ -121,6 +109,76 @@ object Autotuner {
 
   C  
   }
+
+  def autotune[ARGTYPE][RESTYPE](f: (ARGTYPE*)(T*) => RESTYPE, f_gold: ARGTYPE* => RESTYPE)
+                                (input: ARGTYPE*)
+                                (tunable: Tunable): Unit = {
+
+    // Some autotuning constants
+    val numGenerations = 100
+    val populationSize = 10
+    val invalidScore = -999
+
+    // Population of tunables: map maintains score of each tunable
+    var population = Map[T,Int]()
+    var populationCache = Set[T]()
+
+    // Initialize population with random 'tunable' parameters
+    for (i <- 0 until 10) {
+      var tunable = tunableGen
+      while (!(populationCache contains tunable)) {
+        tunable = tunableGen
+      }
+      populationCache += tunable
+      population += (tunable -> invalidScore)
+    }
+
+    // Genetic search for 'numGenerations' generations
+    for (gen <- 0 until numGenerations) {
+      println("Generation %d".format(gen))
+
+      // Profile run each of the tunables in population
+      for (t <- population) {
+        var elapsedTimes = List[Long]()
+        for (i <- 0 to 5) {
+          val t1 = System.nanoTime
+          val res = f(input)(t)
+          val t2 = System.nanoTime
+          val elapsedTime = t2 - t1
+          elapsedTimes ::= elapsedTime
+        }
+        val elapsedMedian = elapsedTimes.sorted.apply(elapsedTimes.length/2)
+        population += (t -> elapsedMedian)
+      }
+
+      // Get sorted list of tunables by rank
+      val popList = population.toList
+      val sortedTupleList = popList sortBy { _._2 }
+      val sortedTunables = sortedTupleList map { x => x_.1 }
+
+      // Time for deletions - bottom half underperforming tunables just gets dropped
+      var newPop = sortedTunables dropRight (sortedTunables.length / 2)
+
+      // We need to make up 10 new members of population
+      // - 5 by crossover of the top 10 in random order
+      // - 3 by mutations of the top 5 in random order
+      // - 2 completely random tunables
+
+
+
+
+    }
+    for (m <- factors(M); n <- factors(N); p <- factors(P)) {
+      var multTimes = List[Long]()
+
+      // Run matrix multiply 6 (arbitrarily chosen) times, take the median
+      
+      val matMultMedian = multTimes.sorted.apply(multTimes.length/2)
+      perfMap += (matMultMedian -> (m,p,n))
+    }
+
+  }
+
 
   def main(args: Array[String]) = {
     def usage() = {

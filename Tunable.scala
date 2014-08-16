@@ -1,4 +1,3 @@
-package tunable
 import scala.util.Random
 
 /**  Class Tunable - represents an n-tuple of values of type T that need to be tuned.
@@ -13,10 +12,35 @@ class Tunable[T](val tunable: List[T], val geneList: List[List[T]]) {
   def apply(x: Int) = { tunable(x) }
 
   def crossOver(that: Tunable[T]): Tunable[T] = {
-    val temp = (tunable) dropRight (Math.abs(Random.nextInt) % (tunable.length) + 1)
-    val ret = temp ::: (that.tunable drop temp.length)
+    var fromThis = List[T]()
+    var fromThat = List[T]()
+    val numFromThis = Math.abs(Random.nextInt) % tunable.length
+    val numFromThat = tunable.length - numFromThis
+    if (Random.nextInt % 2 == 0) {
+      fromThis = tunable take (numFromThis)
+      fromThat = that.tunable takeRight (numFromThat)
+    }
+    else {
+      fromThat = that.tunable take (numFromThat)
+      fromThis = tunable takeRight (numFromThis)
+    }
+
+    val ret = fromThis ::: fromThat
     new Tunable[T](ret, geneList)
   }
+
+  override def equals(o: Any) = o match {
+    case that: Tunable[T] =>
+      if(that.tunable == tunable && that.geneList == geneList) {
+        true
+      }
+      else {
+        false               
+      }
+    case _ => super.equals(o)
+  }
+
+  override def hashCode = this.tunable.hashCode + this.geneList.hashCode
 
   def mutate(): Tunable[T] = {
     // Some mutation constants
